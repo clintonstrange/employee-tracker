@@ -113,6 +113,8 @@ const employeeTrackerApp = () => {
     });
 };
 
+//////////////////  VIEW ALL DEPARTMENTS  /////////////////////
+
 const viewAllDepartments = () => {
   connection.query(`SELECT * FROM department`, (error, response) => {
     if (error) throw error;
@@ -136,6 +138,8 @@ const viewAllDepartments = () => {
     employeeTrackerApp();
   });
 };
+
+//////////////////  VIEW ALL EMPLOYEES  /////////////////////
 
 const viewAllEmployees = () => {
   connection.query(
@@ -169,6 +173,8 @@ const viewAllEmployees = () => {
   );
 };
 
+//////////////////  VIEW ALL ROLES  /////////////////////
+
 const viewAllRoles = () => {
   connection.query(
     `SELECT role.title, role.id, department.name AS department, role.salary 
@@ -198,6 +204,8 @@ const viewAllRoles = () => {
     }
   );
 };
+
+//////////////////  ADD DEPARTMENT  /////////////////////
 
 const addDepartment = () => {
   inquirer
@@ -247,6 +255,8 @@ const addDepartment = () => {
       );
     });
 };
+
+//////////////////  ADD ROLE  /////////////////////
 
 let departmentArr = [];
 function selectDepartment() {
@@ -322,6 +332,8 @@ const addRole = () => {
     });
 };
 
+//////////////////  ADD EMPLOYEE  /////////////////////
+
 let roleArr = [];
 function selectRole() {
   connection.query("SELECT * FROM role", function (error, response) {
@@ -332,20 +344,6 @@ function selectRole() {
   });
   return roleArr;
 }
-
-// let managerArr = [];
-// function selectManager() {
-//   connection.query(
-//     "SELECT first_name, last_name FROM employee WHERE manager_id IS NULL",
-//     function (error, response) {
-//       if (error) throw error;
-//       for (var i = 0; i < response.length; i++) {
-//         managerArr.push(response[i].first_name + " " + response[i].last_name);
-//       }
-//     }
-//   );
-//   return managerArr;
-// }
 
 const addEmployee = () => {
   inquirer
@@ -445,4 +443,89 @@ const addEmployee = () => {
           });
       });
     });
+};
+
+//////////////////  UPDATE EMPLOYEE ROLE  /////////////////////
+let employeeArr = [];
+let rolesArr = [];
+const updateEmployeeRole = () => {
+  connection.query(
+    `SELECT employee.first_name, employee.last_name, role.id AS "role.id" 
+    FROM employee, role, department 
+    WHERE department.id = role.department_id AND role.id = employee.role_id`,
+    (error, response) => {
+      if (error) throw error;
+      for (var i = 0; i < response.length; i++) {
+        response.forEach((employee) => {
+          employeeArr.push(`${employee.first_name} ${employee.last_name}`);
+        });
+      }
+      connection.query(
+        `SELECT role.id, role.title FROM role;`,
+        (error, response) => {
+          if (error) throw error;
+          response.forEach((role) => {
+            rolesArr.push(role.title);
+          });
+
+          inquirer
+            .prompt([
+              {
+                name: "employee",
+                type: "list",
+                message: "Which emplpyee's role would you like to update?",
+                choices: employeeArr,
+              },
+              {
+                name: "role",
+                type: "list",
+                message: "What would like this employee's role to be?",
+                choices: rolesArr,
+              },
+            ])
+            .then((answer) => {
+              let newTitleId, employeeId;
+              console.log(answer);
+              response.forEach((role) => {
+                console.log(role);
+                if (answer.role === role.title) {
+                  newTitleId = role.id;
+                  console.log(newTitleId);
+                }
+              });
+
+              response.forEach((employee) => {
+                console.log(employee);
+                if (
+                  answer.employee ===
+                  `${employee.first_name} ${employee.last_name}`
+                ) {
+                  employeeId = employee.id;
+                  console.log(employeeId);
+                }
+              });
+              connection.query(
+                `UPDATE employee SET employee.role_id = ? WHERE employee.id = ?`,
+                [newTitleId, employeeId],
+                (error) => {
+                  if (error) throw error;
+                  console.log(
+                    chalk.magenta(
+                      `=====================================================================================`
+                    )
+                  );
+                  console.log(chalk.yellow(`UPDATED EMPLOYEE ROLE`));
+                  console.log(
+                    chalk.magenta(
+                      `=====================================================================================`
+                    )
+                  );
+                  viewAllEmployees();
+                }
+              );
+            });
+        }
+      );
+    }
+  );
 };
