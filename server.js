@@ -307,8 +307,8 @@ const addRole = () => {
       };
       console.log(newRole);
       connection.query(
-        "INSERT INTO role (title, salary, department_id) VALUES ?",
-        newRole,
+        "INSERT INTO role (title, salary, department_id) VALUES ?, ?, ?",
+        {newRole.Title},
         function (error) {
           if (error) throw error;
           console.table(newRole);
