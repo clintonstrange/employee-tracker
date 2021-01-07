@@ -186,47 +186,6 @@ const viewAllEmployees = () => {
 
 //////////////////  VIEW EMPLOYEES BY DEPARTMENT /////////////////////
 
-// selectManager = () => {
-//     return new Promise((resolve, reject) => {
-//       const managerArr = ["None"];
-//       connection.query(
-//         'SELECT employee.id, CONCAT(employee.first_name, " ", employee.last_name) AS employee, role.title FROM employee RIGHT JOIN role ON employee.role_id = role.id WHERE role.title = "Sales Manager" OR role.title = "Marketing Manager" OR role.title = "Operastions Manager" OR role.title = "Regional Manager"',
-//         (error, response) => {
-//           if (error) throw error;
-//           response.forEach((manager) => {
-//             managerArr.push(manager.employee);
-//             return error ? reject(error) : resolve(managerArr);
-//           });
-//         }
-//       );
-//     });
-//   };
-
-//   selectManagerId = (manager) => {
-//     return new Promise((resolve, reject) => {
-//       connection.query(
-//         'SELECT * FROM employee WHERE CONCAT(first_name, " ", last_name)=?',
-//         [manager],
-//         async (error, response) => {
-//           if (error) throw error;
-//           return error ? reject(error) : resolve(response[0].id);
-//         }
-//       );
-//     });
-//   };
-// let departmentArr = [];
-// function selectDepartment() {
-//   connection.query("SELECT * FROM department", function (error, response) {
-//     if (error) throw error;
-//     console.log(response);
-//     for (var i = 0; i < response.length; i++) {
-//       departmentArr.push(response[i].name);
-//     }
-//     console.log(departmentArr);
-//   });
-//   return departmentArr;
-// }
-
 async function viewEmployeesByDepartment() {
   let departmentArr = [];
   return new Promise((resolve, reject) => {
@@ -255,26 +214,49 @@ async function viewEmployeesByDepartment() {
             [answer.department],
             (error, response) => {
               if (error) throw error;
-              console.log(response);
-              console.log(response.employees);
-              console.log(
-                chalk.magenta(
-                  `=====================================================================================`
-                )
-              );
-              console.log(chalk.yellow(answer.department + " Employees"));
-              console.log(
-                chalk.magenta(
-                  `=====================================================================================`
-                )
-              );
-              console.table(response.employees);
-              console.log(
-                chalk.magenta(
-                  `=====================================================================================`
-                )
-              );
-              employeeTrackerApp();
+              if (response.length > 0) {
+                console.log(
+                  chalk.magenta(
+                    `=====================================================================================`
+                  )
+                );
+                console.log(chalk.yellow(answer.department + " Employees"));
+                console.log(
+                  chalk.magenta(
+                    `=====================================================================================`
+                  )
+                );
+                console.table(response);
+                console.log(
+                  chalk.magenta(
+                    `=====================================================================================`
+                  )
+                );
+                employeeTrackerApp();
+              } else {
+                console.log(
+                  chalk.magenta(
+                    `=====================================================================================`
+                  )
+                );
+                console.log(chalk.yellow(answer.department + " Employees"));
+                console.log(
+                  chalk.magenta(
+                    `=====================================================================================`
+                  )
+                );
+                console.log(
+                  chalk.red(
+                    "Currently there are no employees in this department."
+                  )
+                );
+                console.log(
+                  chalk.magenta(
+                    `=====================================================================================`
+                  )
+                );
+                employeeTrackerApp();
+              }
             }
           );
         });
@@ -478,74 +460,83 @@ const addDepartment = () => {
 //////////////////  ADD ROLE  /////////////////////
 
 const addRole = () => {
-  connection
-    .promise()
-    .query(`SELECT department_name FORM department`)
-    .then([response]),
-    function (error, response) {
-      if (error) throw error;
-      console.log(response);
-    };
-  inquirer
-    .prompt([
-      {
-        name: "title",
-        type: "input",
-        message: "What is the title of the role you are adding?",
-        validate: (roleInput) => {
-          if (roleInput) {
-            return true;
-          } else {
-            console.log("Please provide the title of the role you are adding.");
-            return false;
-          }
-        },
-      },
-      {
-        name: "salary",
-        type: "input",
-        message: "What is the salary of the role you are adding?",
-        validate: (salaryInput) => {
-          if (salaryInput > 0) {
-            return true;
-          } else {
-            console.log(
-              "Please provide the salary of the role you are adding."
-            );
-            return false;
-          }
-        },
-      },
-      {
-        name: "department",
-        type: "list",
-        message: "Which department does this role belong to?",
-        choices: selectDepartment(),
-      },
-    ])
-    .then((answer) => {
-      const departmentId = selectDepartment().indexOf(answer.department) + 1;
-      const newRole = [answer.title, answer.salary, departmentId.toString()];
-      connection.query(
-        `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`,
-        newRole,
-        (error) => {
-          if (error) throw error;
-          console.log(
-            chalk.magenta(
-              `=====================================================================================`
-            )
-          );
-          console.log(chalk.yellow(`ADDED ROLE: ` + answer.title));
-          console.log(
-            chalk.magenta(
-              `=====================================================================================`
-            )
-          );
-          viewAllRoles();
-        }
-      );
+  let departmentArr = [];
+  return new Promise((resolve, reject) => {
+    connection.query("SELECT * FROM department", function (error, response) {
+      if (error) return reject(error);
+      resolve;
+      for (i = 0; i < response.length; i++) {
+        departmentArr.push(response[i].name);
+      }
+      return resolve(departmentArr);
     });
+  }).then((response) => {
+    inquirer
+      .prompt([
+        {
+          name: "title",
+          type: "input",
+          message: "What is the title of the role you are adding?",
+          validate: (roleInput) => {
+            if (roleInput) {
+              return true;
+            } else {
+              console.log(
+                "Please provide the title of the role you are adding."
+              );
+              return false;
+            }
+          },
+        },
+        {
+          name: "salary",
+          type: "input",
+          message: "What is the salary of the role you are adding?",
+          validate: (salaryInput) => {
+            if (salaryInput > 0) {
+              return true;
+            } else {
+              console.log(
+                "Please provide the salary of the role you are adding."
+              );
+              return false;
+            }
+          },
+        },
+        {
+          name: "department",
+          type: "list",
+          message: "Which department does this role belong to?",
+          choices: response,
+        },
+      ])
+      .then((answer) => {
+        console.log(answer);
+        const departmentId = departmentArr.indexOf(answer.department) + 1;
+        console.log(departmentId);
+        const newRole = [answer.title, answer.salary, departmentId];
+        console.log(newRole);
+        connection.query(
+          `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`,
+          newRole,
+          (error) => {
+            if (error) throw error;
+            console.log(
+              chalk.magenta(
+                `=====================================================================================`
+              )
+            );
+            console.log(chalk.yellow(`ADDED ROLE: ` + answer.title));
+            console.log(
+              chalk.magenta(
+                `=====================================================================================`
+              )
+            );
+            viewAllRoles();
+          }
+        );
+      });
+  });
 };
 
 //////////////////  ADD EMPLOYEE  /////////////////////
