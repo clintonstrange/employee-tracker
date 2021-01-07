@@ -108,6 +108,17 @@ const employeeTrackerApp = () => {
       }
 
       if (choices === "Exit") {
+        console.log(
+          chalk.magenta.bold(
+            `=====================================================================================`
+          )
+        );
+        console.log(chalk.blue.bold(figlet.textSync("Bye Bye")));
+        console.log(
+          chalk.magenta.bold(
+            `=====================================================================================`
+          )
+        );
         connection.end();
       }
     });
@@ -171,6 +182,114 @@ const viewAllEmployees = () => {
       employeeTrackerApp();
     }
   );
+};
+
+//////////////////  VIEW EMPLOYEES BY MANAGER /////////////////////
+
+selectManager = () => {
+  return new Promise((resolve, reject) => {
+    const managerArr = ["None"];
+    connection.query(
+      'SELECT employee.id, CONCAT(employee.first_name, " ", employee.last_name) AS employee, role.title FROM employee RIGHT JOIN role ON employee.role_id = role.id WHERE role.title = "Sales Manager" OR role.title = "Marketing Manager" OR role.title = "Operastions Manager" OR role.title = "Regional Manager"',
+      (error, response) => {
+        if (error) throw error;
+        response.forEach((manager) => {
+          managerArr.push(manager.employee);
+          return error ? reject(error) : resolve(managerArr);
+        });
+      }
+    );
+  });
+};
+
+selectManagerId = (manager) => {
+  return new Promise((resolve, reject) => {
+    connection.query(
+      'SELECT * FROM employee WHERE CONCAT(first_name, " ", last_name)=?',
+      [manager],
+      async (error, response) => {
+        if (error) throw error;
+        return error ? reject(error) : resolve(response[0].id);
+      }
+    );
+  });
+};
+
+viewEmployeesByManager = async () => {
+  inquirer
+    .prompt({
+      name: "manager",
+      type: "list",
+      message: "Please select a manager to see their employees.",
+      choices: await selectManager(),
+    })
+    .then(async (answer) => {
+      const managerId =
+        answer.manager === "None"
+          ? null
+          : await selectManagerId(answer.manager);
+      if (managerId === null) {
+        connection.query(
+          "SELECT CONCAT(first_name, ' ', last_name) as employees FROM employee where manager_id is null",
+          (error, response) => {
+            if (error) throw error;
+            console.log(
+              chalk.magenta(
+                `=====================================================================================`
+              )
+            );
+            console.log(chalk.yellow(`EMPLOYEES WITH NO MANAGER`));
+            console.log(
+              chalk.magenta(
+                `=====================================================================================`
+              )
+            );
+            console.table(response);
+            console.log(
+              chalk.magenta(
+                `=====================================================================================`
+              )
+            );
+            employeeTrackerApp();
+          }
+        );
+      } else {
+        connection.query(
+          "SELECT CONCAT(first_name, ' ', last_name) AS employees FROM employee where manager_id=?",
+          [managerId],
+          (error, response) => {
+            if (error) throw error;
+            if (response.length < 1) {
+              console.log(
+                chalk.magenta(
+                  `=====================================================================================`
+                )
+              );
+              console.log(chalk.yellow(`NO EMPLOYEES`));
+              console.log(
+                chalk.magenta(
+                  `=====================================================================================`
+                )
+              );
+              employeeTrackerApp();
+            } else {
+              console.log(
+                chalk.magenta(
+                  `=====================================================================================`
+                )
+              );
+              console.table(response);
+              console.log(
+                chalk.magenta(
+                  `=====================================================================================`
+                )
+              );
+              employeeTrackerApp();
+            }
+          }
+        );
+      }
+    });
 };
 
 //////////////////  VIEW ALL ROLES  /////////////////////
@@ -446,86 +565,95 @@ const addEmployee = () => {
 };
 
 //////////////////  UPDATE EMPLOYEE ROLE  /////////////////////
-let employeeArr = [];
-let rolesArr = [];
-const updateEmployeeRole = () => {
-  connection.query(
-    `SELECT employee.first_name, employee.last_name, role.id AS "role.id" 
-    FROM employee, role, department 
-    WHERE department.id = role.department_id AND role.id = employee.role_id`,
-    (error, response) => {
+
+selectEmployee = () => {
+  return new Promise((resolve, reject) => {
+    const employeeArr = [];
+    connection.query("SELECT * FROM employee", (error, response) => {
       if (error) throw error;
-      for (var i = 0; i < response.length; i++) {
-        response.forEach((employee) => {
-          employeeArr.push(`${employee.first_name} ${employee.last_name}`);
-        });
+      response.forEach((employee) => {
+        let employeeName = employee.first_name + " " + employee.last_name;
+        employeeArr.push(employeeName);
+        return error ? reject(error) : resolve(employeeArr);
+      });
+    });
+  });
+};
+
+employeeIdQuery = (employee) => {
+  return new Promise((resolve, reject) => {
+    connection.query(
+      "SELECT * FROM employee WHERE CONCAT(first_name, ' ', last_name)=?",
+      [employee],
+      async (error, response) => {
+        if (error) throw error;
+        return error ? reject(error) : resolve(response[0].id);
       }
+    );
+  });
+};
+
+roleIdQuery = (role) => {
+  return new Promise((resolve, reject) => {
+    connection.query(
+      "SELECT * FROM role WHERE title=?",
+      [role],
+      async (err, res) => {
+        if (err) throw err;
+        return err ? reject(err) : resolve(res[0].id);
+      }
+    );
+  });
+};
+
+updateEmployeeRole = async () => {
+  inquirer
+    .prompt([
+      {
+        name: "employee",
+        type: "list",
+        message: "Which employee's role would you like to update?",
+        choices: await selectEmployee(),
+      },
+      {
+        name: "role",
+        type: "list",
+        message: "What would like to this employee's role to be?",
+        choices: await selectRole(),
+      },
+    ])
+    .then(async (answer) => {
+      const employeeId = await employeeIdQuery(answer.employee);
+      const newRoleId = await roleIdQuery(answer.role);
       connection.query(
-        `SELECT role.id, role.title FROM role;`,
-        (error, response) => {
+        "UPDATE employee SET ? WHERE id=?",
+        [
+          {
+            role_id: newRoleId,
+          },
+          employeeId,
+        ],
+        (error) => {
           if (error) throw error;
-          response.forEach((role) => {
-            rolesArr.push(role.title);
-          });
-
-          inquirer
-            .prompt([
-              {
-                name: "employee",
-                type: "list",
-                message: "Which emplpyee's role would you like to update?",
-                choices: employeeArr,
-              },
-              {
-                name: "role",
-                type: "list",
-                message: "What would like this employee's role to be?",
-                choices: rolesArr,
-              },
-            ])
-            .then((answer) => {
-              let newTitleId, employeeId;
-              console.log(answer);
-              response.forEach((role) => {
-                console.log(role);
-                if (answer.role === role.title) {
-                  newTitleId = role.id;
-                  console.log(newTitleId);
-                }
-              });
-
-              response.forEach((employee) => {
-                console.log(employee);
-                if (
-                  answer.employee ===
-                  `${employee.first_name} ${employee.last_name}`
-                ) {
-                  employeeId = employee.id;
-                  console.log(employeeId);
-                }
-              });
-              connection.query(
-                `UPDATE employee SET employee.role_id = ? WHERE employee.id = ?`,
-                [newTitleId, employeeId],
-                (error) => {
-                  if (error) throw error;
-                  console.log(
-                    chalk.magenta(
-                      `=====================================================================================`
-                    )
-                  );
-                  console.log(chalk.yellow(`UPDATED EMPLOYEE ROLE`));
-                  console.log(
-                    chalk.magenta(
-                      `=====================================================================================`
-                    )
-                  );
-                  viewAllEmployees();
-                }
-              );
-            });
+          console.log(
+            chalk.magenta(
+              `=====================================================================================`
+            )
+          );
+          console.log(chalk.yellow(`UPDATED EMPLOYEE ROLE`));
+          console.log(
+            chalk.magenta(
+              `=====================================================================================`
+            )
+          );
+          console.table(answer);
+          console.log(
+            chalk.magenta(
+              `=====================================================================================`
+            )
+          );
+          employeeTrackerApp();
         }
       );
-    }
-  );
+    });
 };
