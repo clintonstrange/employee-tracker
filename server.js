@@ -4,6 +4,8 @@ const chalk = require("chalk");
 const figlet = require("figlet");
 const consoleTable = require("console.table");
 
+//////////////////  MySQL CONNECTION  /////////////////////
+
 connection.connect(function (err) {
   if (err) throw err;
   console.log(
@@ -21,6 +23,8 @@ connection.connect(function (err) {
   );
   employeeTrackerApp();
 });
+
+//////////////////  START EMPLOYEE TRACKER APP  /////////////////////
 
 async function employeeTrackerApp() {
   return inquirer
@@ -744,4 +748,65 @@ updateEmployeeRole = async () => {
         }
       );
     });
+};
+
+//////////////////  UPDATE EMPLOYEE ROLE  /////////////////////
+
+updateEmployeeManager = async () => {
+  return new Promise((resolve, reject) => {
+    const employeeArr = [];
+    connection.query("SELECT * FROM employee", (error, response) => {
+      if (error) throw error;
+      response.forEach((employee) => {
+        let employeeName = employee.first_name + " " + employee.last_name;
+        employeeArr.push(employeeName);
+        return error ? reject(error) : resolve(employeeArr);
+      });
+    });
+  }).then(async (response) => {
+    inquirer
+      .prompt([
+        {
+          name: "employee",
+          type: "list",
+          message: "Which employee's role would you like to update?",
+          choices: response,
+        },
+        {
+          name: "manager",
+          type: "list",
+          message: "Please select a Manager for this employee.",
+          choices: await selectManager(),
+        },
+      ])
+      .then(async (answer) => {
+        const employeeId = await employeeIdQuery(answer.employee);
+        const managerId = await selectManagerId(answer.manager);
+        connection.query(
+          "UPDATE employee SET ? WHERE id=?",
+          [{ manager_id: managerId }, employeeId],
+          (error) => {
+            if (error) throw error;
+            console.log(
+              chalk.magenta(
+                `=====================================================================================`
+              )
+            );
+            console.log(chalk.yellow(`UPDATED EMPLOYEE MANAGER`));
+            console.log(
+              chalk.magenta(
+                `=====================================================================================`
+              )
+            );
+            console.table(answer);
+            console.log(
+              chalk.magenta(
+                `=====================================================================================`
+              )
+            );
+            employeeTrackerApp();
+          }
+        );
+      });
+  });
 };
