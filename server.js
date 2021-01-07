@@ -22,7 +22,7 @@ connection.connect(function (err) {
   employeeTrackerApp();
 });
 
-const employeeTrackerApp = () => {
+async function employeeTrackerApp() {
   return inquirer
     .prompt([
       {
@@ -122,7 +122,7 @@ const employeeTrackerApp = () => {
         connection.end();
       }
     });
-};
+}
 
 //////////////////  VIEW ALL DEPARTMENTS  /////////////////////
 
@@ -214,84 +214,61 @@ const viewAllEmployees = () => {
 //       );
 //     });
 //   };
-let departmentArr = [];
-function selectDepartment() {
-  connection.query("SELECT * FROM department", function (error, response) {
-    if (error) throw error;
-    console.log(response);
-    for (var i = 0; i < response.length; i++) {
-      departmentArr.push(response[i].name);
-    }
-    console.log(departmentArr);
-  });
-  return departmentArr;
-}
+// let departmentArr = [];
+// function selectDepartment() {
+//   connection.query("SELECT * FROM department", function (error, response) {
+//     if (error) throw error;
+//     console.log(response);
+//     for (var i = 0; i < response.length; i++) {
+//       departmentArr.push(response[i].name);
+//     }
+//     console.log(departmentArr);
+//   });
+//   return departmentArr;
+// }
 
-viewEmployeesByDepartment = () => {
-  inquirer
-    .prompt([
-      {
-        name: "department",
-        type: "list",
-        message: "Please select a department to see the employees.",
-        choices: selectDepartment(),
-      },
-    ])
-    .then((answer) => {
-      console.log(answer);
-      const managerId =
-        answer.manager === "None" ? null : selectManagerId(answer.manager);
-      if (managerId === null) {
-        connection.query(
-          "SELECT CONCAT(first_name, ' ', last_name) as employees FROM employee where manager_id is null",
-          (error, response) => {
-            if (error) throw error;
-            console.log(
-              chalk.magenta(
-                `=====================================================================================`
-              )
-            );
-            console.log(chalk.yellow(`EMPLOYEES WITH NO MANAGER`));
-            console.log(
-              chalk.magenta(
-                `=====================================================================================`
-              )
-            );
-            console.table(response);
-            console.log(
-              chalk.magenta(
-                `=====================================================================================`
-              )
-            );
-            employeeTrackerApp();
-          }
-        );
-      } else {
-        connection.query(
-          "SELECT CONCAT(first_name, ' ', last_name) AS employees FROM employee where manager_id=?",
-          [managerId],
-          (error, response) => {
-            if (error) throw error;
-            if (response.length < 1) {
+async function viewEmployeesByDepartment() {
+  let departmentArr = [];
+  return new Promise((resolve, reject) => {
+    connection.query("SELECT * FROM department", function (error, response) {
+      if (error) return reject(error);
+      resolve;
+      for (i = 0; i < response.length; i++) {
+        departmentArr.push(response[i].name);
+      }
+      return resolve(departmentArr);
+    });
+  })
+    .then((response) => {
+      inquirer
+        .prompt([
+          {
+            name: "department",
+            type: "list",
+            message: "Please select a department to see the employees.",
+            choices: response,
+          },
+        ])
+        .then((answer) => {
+          connection.query(
+            "SELECT CONCAT(first_name, ' ', last_name) AS employees FROM employee, role, department WHERE employee.role_id = role.id && role.department_id = department.id && department.name = ?",
+            [answer.department],
+            (error, response) => {
+              if (error) throw error;
+              console.log(response);
+              console.log(response.employees);
               console.log(
                 chalk.magenta(
                   `=====================================================================================`
                 )
               );
-              console.log(chalk.yellow(`NO EMPLOYEES`));
+              console.log(chalk.yellow(answer.department + " Employees"));
               console.log(
                 chalk.magenta(
                   `=====================================================================================`
                 )
               );
-              employeeTrackerApp();
-            } else {
-              console.log(
-                chalk.magenta(
-                  `=====================================================================================`
-                )
-              );
-              console.table(response);
+              console.table(response.employees);
               console.log(
                 chalk.magenta(
                   `=====================================================================================`
@@ -299,11 +276,13 @@ viewEmployeesByDepartment = () => {
               );
               employeeTrackerApp();
             }
-          }
-        );
-      }
+          );
+        });
+    })
+    .catch((error) => {
+      throw error;
     });
-};
+}
 
 //////////////////  VIEW EMPLOYEES BY MANAGER /////////////////////
 
@@ -499,6 +478,14 @@ const addDepartment = () => {
 //////////////////  ADD ROLE  /////////////////////
 
 const addRole = () => {
+  connection
+    .promise()
+    .query(`SELECT department_name FORM department`)
+    .then([response]),
+    function (error, response) {
+      if (error) throw error;
+      console.log(response);
+    };
   inquirer
     .prompt([
       {
