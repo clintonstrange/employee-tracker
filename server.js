@@ -408,36 +408,6 @@ async function viewBudget() {
     }
   );
 }
-//   let departmentArr = [];
-//   return new Promise((resolve, reject) => {
-//     connection.query("SELECT * FROM department", function (error, response) {
-//       if (error) return reject(error);
-//       resolve;
-//       for (i = 0; i < response.length; i++) {
-//         departmentArr.push(response[i].name);
-//       }
-//       return resolve(departmentArr);
-//     });
-//   }).then((response) => {
-//     inquirer
-//       .prompt([
-//         {
-//           name: "department",
-//           type: "list",
-//           message: "Please select a department to see the employees.",
-//           choices: response,
-//         },
-//       ])
-//       .then((answer) => {
-//         console.log(answer);
-//          connection.query(
-//            "SELECT * FROM role WHERE department_id = department.idAS employees FROM employee, role, department WHERE employee.role_id = role.id && role.department_id = department.id && department.name = ?",
-//            [answer.department],
-//            (error, response) => {
-//              if (error) throw error;
-//       });
-//   });
-// }
 
 //////////////////  VIEW ALL ROLES  /////////////////////
 
@@ -656,12 +626,10 @@ const addEmployee = () => {
     ])
     .then((answer) => {
       const roleId = selectRole().indexOf(answer.role_id) + 1;
-      // const managerId = selectManager().indexOf(answer.manager_id) + 1;
       const newEmployee = [
         answer.first_name,
         answer.last_name,
         roleId.toString(),
-        // managerId.toString(),
       ];
       connection.query(`SELECT * FROM employee`, (error, data) => {
         if (error) throw error;
@@ -1000,8 +968,6 @@ deleteDepartment = async () => {
         },
       ])
       .then(async (answer) => {
-        console.log(answer);
-        console.log(departmentArr);
         const department = departmentArr.find(
           ({ name }) => name === answer.department
         );
