@@ -272,21 +272,21 @@ async function viewEmployeesByDepartment() {
 
 //////////////////  VIEW EMPLOYEES BY MANAGER /////////////////////
 
-selectManager = () => {
-  return new Promise((resolve, reject) => {
-    const managerArr = ["None"];
-    connection.query(
-      'SELECT employee.id, CONCAT(employee.first_name, " ", employee.last_name) AS employee, role.title FROM employee RIGHT JOIN role ON employee.role_id = role.id WHERE role.title = "Sales Manager" OR role.title = "Marketing Manager" OR role.title = "Operastions Manager" OR role.title = "Regional Manager"',
-      (error, response) => {
-        if (error) throw error;
-        response.forEach((manager) => {
-          managerArr.push(manager.employee);
-          return error ? reject(error) : resolve(managerArr);
-        });
-      }
-    );
-  });
-};
+// selectManager = () => {
+//   return new Promise((resolve, reject) => {
+//     const managerArr = ["None"];
+//     connection.query(
+//       'SELECT employee.id, CONCAT(employee.first_name, " ", employee.last_name) AS employee, role.title FROM employee RIGHT JOIN role ON employee.role_id = role.id WHERE role.title = "Sales Manager" OR role.title = "Marketing Manager" OR role.title = "Operastions Manager" OR role.title = "Regional Manager"',
+//       (error, response) => {
+//         if (error) throw error;
+//         response.forEach((manager) => {
+//           managerArr.push(manager.employee);
+//           return error ? reject(error) : resolve(managerArr);
+//         });
+//       }
+//     );
+//   });
+// };
 
 selectManagerId = (manager) => {
   return new Promise((resolve, reject) => {
@@ -301,64 +301,47 @@ selectManagerId = (manager) => {
   });
 };
 
-viewEmployeesByManager = async () => {
-  inquirer
-    .prompt({
-      name: "manager",
-      type: "list",
-      message: "Please select a manager to see their employees.",
-      choices: await selectManager(),
-    })
-    .then(async (answer) => {
-      const managerId =
-        answer.manager === "None"
-          ? null
-          : await selectManagerId(answer.manager);
-      if (managerId === null) {
-        connection.query(
-          "SELECT CONCAT(first_name, ' ', last_name) as employees FROM employee where manager_id is null",
-          (error, response) => {
-            if (error) throw error;
-            console.log(
-              chalk.magenta(
-                `=====================================================================================`
-              )
-            );
-            console.log(chalk.yellow(`EMPLOYEES WITH NO MANAGER`));
-            console.log(
-              chalk.magenta(
-                `=====================================================================================`
-              )
-            );
-            console.table(response);
-            console.log(
-              chalk.magenta(
-                `=====================================================================================`
-              )
-            );
-            employeeTrackerApp();
-          }
-        );
-      } else {
-        connection.query(
-          "SELECT CONCAT(first_name, ' ', last_name) AS employees FROM employee where manager_id=?",
-          [managerId],
-          (error, response) => {
-            if (error) throw error;
-            if (response.length < 1) {
+async function viewEmployeesByManager() {
+  let managerArr = ["None"];
+  return new Promise((resolve, reject) => {
+    connection.query(
+      'SELECT employee.id, CONCAT(employee.first_name, " ", employee.last_name) AS employee, role.title FROM employee RIGHT JOIN role ON employee.role_id = role.id WHERE role.title = "Sales Manager" OR role.title = "Marketing Manager" OR role.title = "Regional Manager"',
+      function (error, response) {
+        if (error) return reject(error);
+        resolve;
+        response.forEach((manager) => {
+          managerArr.push(manager.employee);
+        });
+        return resolve(managerArr);
+      }
+    );
+  }).then(async (response) => {
+    inquirer
+      .prompt([
+        {
+          name: "manager",
+          type: "list",
+          message: "Please select a manager to see their employees.",
+          choices: await response,
+        },
+      ])
+      .then(async (answer) => {
+        const managerId =
+          answer.manager === "None"
+            ? null
+            : await selectManagerId(answer.manager);
+        console.log(managerId);
+        if (managerId === null) {
+          connection.query(
+            "SELECT CONCAT(first_name, ' ', last_name) as employees FROM employee where manager_id is null",
+            (error, response) => {
+              if (error) throw error;
               console.log(
                 chalk.magenta(
                   `=====================================================================================`
                 )
               );
-              console.log(chalk.yellow(`NO EMPLOYEES`));
-              console.log(
-                chalk.magenta(
-                  `=====================================================================================`
-                )
-              );
-              employeeTrackerApp();
-            } else {
+              console.log(chalk.yellow(`EMPLOYEES WITH NO MANAGER`));
               console.log(
                 chalk.magenta(
                   `=====================================================================================`
@@ -372,11 +355,46 @@ viewEmployeesByManager = async () => {
               );
               employeeTrackerApp();
             }
-          }
-        );
-      }
-    });
-};
+          );
+        } else {
+          connection.query(
+            "SELECT CONCAT(first_name, ' ', last_name) AS employees FROM employee where manager_id=?",
+            [managerId],
+            (error, response) => {
+              if (error) throw error;
+              if (response.length < 1) {
+                console.log(
+                  chalk.magenta(
+                    `=====================================================================================`
+                  )
+                );
+                console.log(chalk.yellow(`NO EMPLOYEES`));
+                console.log(
+                  chalk.magenta(
+                    `=====================================================================================`
+                  )
+                );
+                employeeTrackerApp();
+              } else {
+                console.log(
+                  chalk.magenta(
+                    `=====================================================================================`
+                  )
+                );
+                console.table(response);
+                console.log(
+                  chalk.magenta(
+                    `=====================================================================================`
+                  )
+                );
+                employeeTrackerApp();
+              }
+            }
+          );
+        }
+      });
+  });
+}
 
 //////////////////  VIEW ALL ROLES  /////////////////////
 
@@ -515,11 +533,8 @@ const addRole = () => {
         },
       ])
       .then((answer) => {
-        console.log(answer);
         const departmentId = departmentArr.indexOf(answer.department) + 1;
-        console.log(departmentId);
         const newRole = [answer.title, answer.salary, departmentId];
-        console.log(newRole);
         connection.query(
           `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`,
           newRole,
@@ -793,6 +808,169 @@ updateEmployeeManager = async () => {
               )
             );
             console.log(chalk.yellow(`UPDATED EMPLOYEE MANAGER`));
+            console.log(
+              chalk.magenta(
+                `=====================================================================================`
+              )
+            );
+            console.table(answer);
+            console.log(
+              chalk.magenta(
+                `=====================================================================================`
+              )
+            );
+            employeeTrackerApp();
+          }
+        );
+      });
+  });
+};
+
+//////////////////  DELETE EMPLOYEE /////////////////////
+
+deleteEmployee = async () => {
+  inquirer
+    .prompt([
+      {
+        name: "employee",
+        type: "list",
+        message: "Which employee would you like to remove?",
+        choices: await selectEmployee(),
+      },
+    ])
+    .then(async (answer) => {
+      const employeeId = await employeeIdQuery(answer.employee);
+      connection.query(
+        "DELETE FROM employee WHERE id=?",
+        [employeeId],
+        (error) => {
+          if (error) throw error;
+          console.log(
+            chalk.magenta(
+              `=====================================================================================`
+            )
+          );
+          console.log(chalk.red(`Employee Deleted`));
+          console.log(
+            chalk.magenta(
+              `=====================================================================================`
+            )
+          );
+          console.table(answer);
+          console.log(
+            chalk.magenta(
+              `=====================================================================================`
+            )
+          );
+          employeeTrackerApp();
+        }
+      );
+    });
+};
+
+//////////////////  DELETE ROLE  /////////////////////
+
+deleteRole = async () => {
+  let roleArr = [];
+  return new Promise((resolve, reject) => {
+    connection.query("SELECT * FROM role", function (error, response) {
+      if (error) return reject(error);
+      resolve;
+      for (var i = 0; i < response.length; i++) {
+        roleArr.push(response[i].title);
+      }
+      return resolve(roleArr);
+    });
+  }).then(async (response) => {
+    inquirer
+      .prompt([
+        {
+          name: "role",
+          type: "list",
+          message: "Which role would you like to delete?",
+          choices: response,
+        },
+      ])
+      .then(async (answer) => {
+        const roleId = await roleIdQuery(answer.role);
+        connection.query("DELETE FROM role WHERE id=?", [roleId], (error) => {
+          if (error) throw error;
+          console.log(
+            chalk.magenta(
+              `=====================================================================================`
+            )
+          );
+          console.log(chalk.red(`Role Deleted`));
+          console.log(
+            chalk.magenta(
+              `=====================================================================================`
+            )
+          );
+          console.table(answer);
+          console.log(
+            chalk.magenta(
+              `=====================================================================================`
+            )
+          );
+          employeeTrackerApp();
+        });
+      });
+  });
+};
+
+//////////////////  DELETE DEPARTMENT  /////////////////////
+
+// getDepartmentId = async (department) => {
+//   let departmentArr = [];
+//   connection.query("SELECT * FROM department", function (error, response) {
+//     if (error) throw error;
+//     for (let i = 0; i < response.length; i++) {
+//       console.log(response[i].name);
+//       if (response[i].name === department) {
+//         return response[i].name;
+//       }
+//     }
+//   });
+// };
+
+deleteDepartment = async () => {
+  let departmentArr = [];
+  return new Promise((resolve, reject) => {
+    connection.query("SELECT * FROM department", function (error, response) {
+      if (error) return reject(error);
+      resolve;
+      for (var i = 0; i < response.length; i++) {
+        departmentArr.push(response[i]);
+      }
+      return resolve(departmentArr);
+    });
+  }).then(async (response) => {
+    inquirer
+      .prompt([
+        {
+          name: "department",
+          type: "list",
+          message: "Which department would you like to delete?",
+          choices: response,
+        },
+      ])
+      .then(async (answer) => {
+        console.log(answer);
+        console.log(departmentArr);
+        const department = departmentArr.find(
+          ({ name }) => name === answer.department
+        );
+        connection.query(
+          "DELETE FROM department WHERE id=?",
+          [department.id],
+          (error) => {
+            if (error) throw error;
+            console.log(
+              chalk.magenta(
+                `=====================================================================================`
+              )
+            );
+            console.log(chalk.red(`Department Deleted`));
             console.log(
               chalk.magenta(
                 `=====================================================================================`
