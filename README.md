@@ -39,7 +39,7 @@ This application tracks employees of Dunder Mifflin by allowing you to view, upd
 
   To begin using the application, from the command line run "npm start" and follow instructions from command line, when select "Exit" from the command line prompt. To re-enter the application run "npm start" from the command line.
 
-  [See Walkthrough Video Here]
+  [See Walkthrough Video Here](https://drive.google.com/file/d/1Aa0PaGOpH2M_cZb9bN5cNuNPQDFdME16/view)
 
   ## Questions
 

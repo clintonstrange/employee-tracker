@@ -314,7 +314,6 @@ async function viewEmployeesByManager() {
           answer.manager === "None"
             ? null
             : await selectManagerId(answer.manager);
-        console.log(managerId);
         if (managerId === null) {
           connection.query(
             "SELECT CONCAT(first_name, ' ', last_name) as employees FROM employee where manager_id is null",
