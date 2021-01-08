@@ -39,7 +39,7 @@ async function employeeTrackerApp() {
           { name: "View All Employees" },
           { name: "View Employees By Department" },
           { name: "View Employees By Manager" },
-          { name: "View Budget Of A Department" },
+          { name: "View Budget Of All Departments" },
           { name: "Add A Role" },
           { name: "Add An Employee" },
           { name: "Add A Department" },
@@ -75,7 +75,7 @@ async function employeeTrackerApp() {
         viewEmployeesByManager();
       }
 
-      if (choices === "View Budget Of A Department") {
+      if (choices === "View Budget Of All Departments") {
         viewBudget();
       }
 
@@ -272,22 +272,6 @@ async function viewEmployeesByDepartment() {
 
 //////////////////  VIEW EMPLOYEES BY MANAGER /////////////////////
 
-// selectManager = () => {
-//   return new Promise((resolve, reject) => {
-//     const managerArr = ["None"];
-//     connection.query(
-//       'SELECT employee.id, CONCAT(employee.first_name, " ", employee.last_name) AS employee, role.title FROM employee RIGHT JOIN role ON employee.role_id = role.id WHERE role.title = "Sales Manager" OR role.title = "Marketing Manager" OR role.title = "Operastions Manager" OR role.title = "Regional Manager"',
-//       (error, response) => {
-//         if (error) throw error;
-//         response.forEach((manager) => {
-//           managerArr.push(manager.employee);
-//           return error ? reject(error) : resolve(managerArr);
-//         });
-//       }
-//     );
-//   });
-// };
-
 selectManagerId = (manager) => {
   return new Promise((resolve, reject) => {
     connection.query(
@@ -305,7 +289,7 @@ async function viewEmployeesByManager() {
   let managerArr = ["None"];
   return new Promise((resolve, reject) => {
     connection.query(
-      'SELECT employee.id, CONCAT(employee.first_name, " ", employee.last_name) AS employee, role.title FROM employee RIGHT JOIN role ON employee.role_id = role.id WHERE role.title = "Sales Manager" OR role.title = "Marketing Manager" OR role.title = "Regional Manager"',
+      'SELECT employee.id, CONCAT(employee.first_name, " ", employee.last_name) AS employee, role.title FROM employee RIGHT JOIN role ON employee.role_id = role.id WHERE role.title = "Regional Manager" OR role.title = "Assistant to the Regional Manager" OR role.title = "Sales Manager" OR role.title = "Human Resources Manager" OR role.title = "Wharehouse Manager"',
       function (error, response) {
         if (error) return reject(error);
         resolve;
@@ -395,6 +379,65 @@ async function viewEmployeesByManager() {
       });
   });
 }
+
+//////////////////  VIEW BUDGET OF DEPARTMENT /////////////////////
+
+async function viewBudget() {
+  connection.query(
+    `SELECT department_id AS id, department.name AS department, SUM(salary) AS budget FROM role INNER JOIN department ON role.department_id = department.id GROUP BY role.department_id`,
+    (error, response) => {
+      if (error) throw error;
+      console.log(
+        chalk.magenta(
+          `=====================================================================================`
+        )
+      );
+      console.log(chalk.yellow(`BUDGET BY DEPARTMENT`));
+      console.log(
+        chalk.magenta(
+          `=====================================================================================`
+        )
+      );
+      console.table(response);
+      console.log(
+        chalk.magenta(
+          `=====================================================================================`
+        )
+      );
+      employeeTrackerApp();
+    }
+  );
+}
+//   let departmentArr = [];
+//   return new Promise((resolve, reject) => {
+//     connection.query("SELECT * FROM department", function (error, response) {
+//       if (error) return reject(error);
+//       resolve;
+//       for (i = 0; i < response.length; i++) {
+//         departmentArr.push(response[i].name);
+//       }
+//       return resolve(departmentArr);
+//     });
+//   }).then((response) => {
+//     inquirer
+//       .prompt([
+//         {
+//           name: "department",
+//           type: "list",
+//           message: "Please select a department to see the employees.",
+//           choices: response,
+//         },
+//       ])
+//       .then((answer) => {
+//         console.log(answer);
+//          connection.query(
+//            "SELECT * FROM role WHERE department_id = department.idAS employees FROM employee, role, department WHERE employee.role_id = role.id && role.department_id = department.id && department.name = ?",
+//            [answer.department],
+//            (error, response) => {
+//              if (error) throw error;
+//       });
+//   });
+// }
 
 //////////////////  VIEW ALL ROLES  /////////////////////
 
@@ -612,7 +655,6 @@ const addEmployee = () => {
       },
     ])
     .then((answer) => {
-      console.log(answer);
       const roleId = selectRole().indexOf(answer.role_id) + 1;
       // const managerId = selectManager().indexOf(answer.manager_id) + 1;
       const newEmployee = [
@@ -621,7 +663,6 @@ const addEmployee = () => {
         roleId.toString(),
         // managerId.toString(),
       ];
-      console.log(newEmployee);
       connection.query(`SELECT * FROM employee`, (error, data) => {
         if (error) throw error;
         const managers = data.map(({ id, first_name, last_name }) => ({
@@ -766,6 +807,23 @@ updateEmployeeRole = async () => {
 };
 
 //////////////////  UPDATE EMPLOYEE ROLE  /////////////////////
+
+selectManager = async () => {
+  let managerArr = ["None"];
+  return new Promise((resolve, reject) => {
+    connection.query(
+      'SELECT employee.id, CONCAT(employee.first_name, " ", employee.last_name) AS employee, role.title FROM employee RIGHT JOIN role ON employee.role_id = role.id WHERE role.title = "Regional Manager" OR role.title = "Assistant to the Regional Manager" OR role.title = "Sales Manager" OR role.title = "Human Resources Manager" OR role.title = "Wharehouse Manager"',
+      function (error, response) {
+        if (error) return reject(error);
+        resolve;
+        response.forEach((manager) => {
+          managerArr.push(manager.employee);
+        });
+        return resolve(managerArr);
+      }
+    );
+  });
+};
 
 updateEmployeeManager = async () => {
   return new Promise((resolve, reject) => {
@@ -919,19 +977,6 @@ deleteRole = async () => {
 };
 
 //////////////////  DELETE DEPARTMENT  /////////////////////
-
-// getDepartmentId = async (department) => {
-//   let departmentArr = [];
-//   connection.query("SELECT * FROM department", function (error, response) {
-//     if (error) throw error;
-//     for (let i = 0; i < response.length; i++) {
-//       console.log(response[i].name);
-//       if (response[i].name === department) {
-//         return response[i].name;
-//       }
-//     }
-//   });
-// };
 
 deleteDepartment = async () => {
   let departmentArr = [];

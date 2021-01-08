@@ -1,19 +1,19 @@
-DROP DATABASE IF EXISTS employees_db;
-CREATE DATABASE employees_db;
-USE employees_db;
+DROP DATABASE IF EXISTS dunder_mifflin_db;
+CREATE DATABASE dunder_mifflin_db;
+USE dunder_mifflin_db;
 CREATE TABLE department (
-    id INTEGER(11) AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    name VARCHAR(30),
+    id INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    name VARCHAR(30)
 );
 CREATE TABLE role (
-    id INTEGER(11) AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    title VARCHAR(30),
+    id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(45),
     salary DECIMAL(9, 2),
     department_id INTEGER(11),
     FOREIGN KEY (department_id) REFERENCES department(id)
 );
 CREATE TABLE employee (
-    id INTEGER(11) AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    id INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY,
     first_name VARCHAR(30),
     last_name VARCHAR(30),
     role_id INTEGER(11),

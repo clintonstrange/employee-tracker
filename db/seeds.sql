@@ -1,22 +1,24 @@
 INSERT INTO department(name)
 VALUES("Sales"),
-    ("Marketing"),
-    ("Finance"),
-    ("Legal"),
-    ("Operations");
+    ("Accounting"),
+    ("Human Resources"),
+    ("Customer Service"),
+    ("Wharehouse");
 INSERT INTO role(title, salary, department_id)
-VALUES("Sales Manager", 85000, 1),
-    ("Sales Coordinator", 50000, 1),
-    ("Marketing Manager", 75000, 2),
-    ("Marketing Coordinator", 45000, 2),
-    ("Lawyer", 150000, 3),
-    ("Contract Administrator", 75000, 3),
-    ("Operastions Manager", 50000, 4),
-    ("Operations Supervisor", 40000, 4);
+VALUES("Regional Manager", 99000, 1),
+    ("Assistant to the Regional Manager", 90000, 1),
+    ("Sales Manager", 80000, 1),
+    ("Accounting Clerk", 70000, 2),
+    ("Customer Service Representive", 45000, 4),
+    ("Human Resources Manager", 65000, 3),
+    ("Wharehouse Manager", 50000, 5),
+    ("Baler Operator", 40000, 5);
 INSERT INTO employee(first_name, last_name, role_id, manager_id)
-VALUES("Anakin", "Skywalker", 1, null),
-    ("Ashoka", "Tano", 2, 1),
-    ("Ben", "Kenobi", 5, null),
-    ("Ben", "Solo", 7, null),
-    ("Luke", "Skywalker", 3, null),
-    ("Bobba", "Fett", 4, 5);
+VALUES("Michael", "Scott", 1, null),
+    ("Dwight", "Schrute", 2, 1),
+    ("Jim", "Halpert", 3, 1),
+    ("Oscar", "Martinez", 4, 1),
+    ("Toby", "Flenderson", 6, null),
+    ("Kelly", "Kapor", 5, 2),
+    ("Daryl", "Philbin", 7, 1),
+    ("Roy", "Anderson", 8, 7)
