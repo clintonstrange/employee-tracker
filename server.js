@@ -45,6 +45,7 @@ async function employeeTrackerApp() {
           { name: "Add A Department" },
           { name: "Update An Employee Role" },
           { name: "Update Employee Manager" },
+          // { name: "Update Role Salary" },
           { name: "Delete Employee" },
           { name: "Delete Role" },
           { name: "Delete Department" },
@@ -98,6 +99,10 @@ async function employeeTrackerApp() {
       if (choices === "Update Employee Manager") {
         updateEmployeeManager();
       }
+
+      // if (choices === "Update Role Salary") {
+      //   updateRoleSalary();
+      // }
 
       if (choices === "Delete Employee") {
         deleteEmployee();
@@ -851,6 +856,64 @@ updateEmployeeManager = async () => {
   });
 };
 
+// updateRoleSalary = async () => {
+//   inquirer
+//     .prompt([
+//       {
+//         name: "role",
+//         type: "list",
+//         message: "What Role do you wish to update the salary for?",
+//         choices: await selectRole(),
+//       },
+// {
+//   name: "newSalary",
+//   type: "input",
+//   message: "What do you want the new salary to be?",
+//   validate: (salaryInput) => {
+//     if (salaryInput) {
+//       return true;
+//     } else {
+//       console.log("Please provide a new salary.");
+//       return false;
+//     }
+//   },
+// },
+// ])
+// .then(async (answer) => {
+//   console.log(answer);
+//      const updatedRoleId = await roleIdQuery(answer.role);
+//   //   //const newSalary = await salary
+//     connection.query(
+//       "UPDATE salary SET ? WHERE id=?",
+//     [
+//       {
+//         role_id: updatedRoleId,
+//       }
+//     ],
+//     (error) => {
+//       if (error) throw error;
+//       console.log(
+//         chalk.magenta(
+//           `=====================================================================================`
+//         )
+//       );
+//       console.log(chalk.yellow(`UPDATED ROLE Salary`));
+//       console.log(
+//         chalk.magenta(
+//           `=====================================================================================`
+//         )
+//       );
+//       console.table(answer);
+//       console.log(
+//         chalk.magenta(
+//           `=====================================================================================`
+//         )
+//       );
+//       employeeTrackerApp();
+//     }
+//   );
+//     });
+// };
 //////////////////  DELETE EMPLOYEE /////////////////////
 
 deleteEmployee = async () => {
